@@ -1,0 +1,146 @@
+﻿@model IEnumerable<Todo>
+
+
+
+@*
+    
+*@
+@{
+}
+
+<div class="task-list">
+    <div id="newtask">
+        <input type="text" placeholder="Task to be done..">
+        <button id="push" onclick="addTask()">Add</button>
+    </div>
+
+    @foreach (Todo task in Model)
+    {
+        <div id="tasks">
+            <form id="task-@task.Id" class="edit-form">
+                <div class="task">
+                    <div>
+                        <label class="checkbox-container">
+                            <input type="checkbox" onclick="changeCheck(@task.Id)" checked="@(task.IsCompleted == true ? "checked" : null)" />
+                            <span class="checkmark"></span>
+                        </label>
+                        <label for="task" class="display-title" id="taskname">@task.Title</label>
+                        <input type="text" id="task" name="task" class="edit-title edit-mode">
+                    </div>
+                    <div>
+                        <button type="button" class="edit-button" onclick="toggleEditMode(@task.Id)">
+                            <i class="far fa-pen-to-square"></i>
+                        </button>
+                        <button type="button" class="save-button" onclick="saveChanges(@task.Id)">
+                            <i class="fa-regular fa-floppy-disk"></i>
+                        </button>
+                        <button type="button" class="delete" onclick="deleteTask(@task.Id)">
+                            <i class="far fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    }
+</div>
+
+
+
+<script>
+    function toggleEditMode(formId) {
+        var form = $('#task-' + formId);
+        var displayTitle = form.find('.display-title');
+        var editTitle = form.find('.edit-title');
+        var editButton = form.find('.edit-button');
+        var saveButton = form.find('.save-button');
+
+        if (displayTitle.css('display') === 'none') {
+            displayTitle.show();
+            editTitle.hide();
+            editButton.show();
+            saveButton.hide();
+            
+        } else {
+            displayTitle.hide();
+            editTitle.show();
+            editButton.hide();
+            saveButton.show();
+
+            editTitle.val(displayTitle.text());
+        }
+    }
+
+    function saveChanges(formId) {
+        var form = $('#task-' + formId);
+        var displayTitle = form.find('.display-title');
+        var editTitle = form.find('.edit-title');
+        
+        displayTitle.text(editTitle.val());
+
+        toggleEditMode(formId);
+
+        $.ajax({
+            url: '/Task/Edit',
+            type: 'POST',
+            data: { id: formId, title: editTitle.val() },
+            success: function (data) {
+                console.log('Изменения успешно сохранены.');
+            },
+            error: function (error) {
+                console.error('Произошла ошибка при сохранении изменений:', error);
+            }
+        });
+    }
+
+    function addTask() {
+        var newTaskInput = document.querySelector('#newtask input');
+        if (newTaskInput.value.length == 0) {
+            alert("Please Enter a Task")
+        }
+        else {
+            var newTask = newTaskInput.value;
+
+            $.ajax({
+                url: '/Task/Add',
+                type: 'POST',
+                data: { title: newTask },
+                success: function (data) {
+                    console.log('Новая задача успешно сохранена.');
+                    location.reload();
+                },
+                error: function (error) {
+                    console.error('Произошла ошибка при сохранении новой задачи:', error);
+                }
+            })
+        }
+    }
+
+    function deleteTask(formId) {
+        $.ajax({
+            url: '/Task/Delete',
+            type: 'POST',
+            data: { id: formId },
+            success: function (data) {
+                console.log('Задача успешно удалена.');
+                location.reload();
+            },
+            error: function (error) {
+                console.error('Произошла ошибка при удаление задачи:', error);
+            }
+        })
+    }
+
+    function changeCheck(formId) {
+        $.ajax({
+            url: '/Task/ChangeCheck',
+            type: 'POST',
+            data: { id: formId },
+            success: function (data) {
+                console.log('Изменения успешно сохранены.');
+            },
+            error: function (error) {
+                console.error('Произошла ошибка при сохранении изменений:', error);
+            }
+        });
+    }
+</script>
